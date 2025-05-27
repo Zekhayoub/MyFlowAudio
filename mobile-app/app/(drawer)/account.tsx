@@ -1,24 +1,40 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   ScrollView,
   Pressable,
   StyleSheet,
+  Modal,
+  Alert,
 } from 'react-native';
 import { router } from 'expo-router';
+import { Camera, CameraView } from 'expo-camera';
 import Header from '../../src/components/common/Header';
 import mockData from '../../src/data/mockData';
 import theme from '../../src/styles/theme';
 import globalStyles from '../../src/styles/globalStyles';
 
 const AccountScreen: React.FC = () => {
+  // États pour la caméra
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [showCamera, setShowCamera] = useState(false);
+  const [facing, setFacing] = useState<'front' | 'back'>('back');
+
+  // Demander les permissions au montage du composant
+  useEffect(() => {
+    (async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      setHasPermission(status === 'granted');
+    })();
+  }, []);
+
   // Calcul des statistiques utilisateur
   const userStats = {
     totalSongs: mockData.songs.length,
     totalPlaylists: mockData.playlists.length,
     totalPlaytime: mockData.songs.reduce((total, song) => total + (song.duration || 0), 0),
-    likedSongs: mockData.songs.filter(song => song.play_count > 2000).length, // Simulation des likes
+    likedSongs: mockData.songs.filter(song => song.play_count > 2000).length,
   };
 
   // Formatage du temps total d'écoute
@@ -28,26 +44,38 @@ const AccountScreen: React.FC = () => {
     return `${hours}h ${minutes}min`;
   };
 
-  // Handlers pour les interactions avec navigation
+  // Handler pour ouvrir la caméra
+  const handleOpenCamera = () => {
+    if (hasPermission === null) {
+      Alert.alert('Permissions', 'Vérification des permissions en cours...');
+      return;
+    }
+    if (hasPermission === false) {
+      Alert.alert('Permission refusée', 'L\'accès à la caméra a été refusé.');
+      return;
+    }
+    setShowCamera(true);
+  };
+
+  // Handler pour changer de caméra
+  const toggleCameraFacing = () => {
+    setFacing(current => (current === 'back' ? 'front' : 'back'));
+  };
+
+  // Handlers existants
   const handleEditProfile = () => {
     console.log('Edit profile');
-    // TODO: Navigation vers édition profil
   };
 
   const handleViewPlaylists = () => {
-    console.log('Navigate to home - playlists section');
     router.push('/(drawer)/');
   };
 
   const handleViewLiked = () => {
-    console.log('Navigate to liked songs');
     router.push('/(drawer)/liked');
   };
 
   const handleLocationSettings = () => {
-    console.log('Location settings');
-    // TODO: Géolocalisation API settings
-    // Pour l'instant, juste un message
     alert('Géolocalisation sera disponible bientôt !');
   };
 
@@ -63,13 +91,24 @@ const AccountScreen: React.FC = () => {
           
           {/* Section Profil */}
           <View style={styles.profileSection}>
-            {/* Avatar */}
-            <View style={styles.avatarContainer}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {mockData.user.username?.charAt(0).toUpperCase() || 'U'}
-                </Text>
+            {/* Container Avatar avec bouton caméra */}
+            <View style={styles.avatarWrapper}>
+              {/* Avatar */}
+              <View style={styles.avatarContainer}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>
+                    {mockData.user.username?.charAt(0).toUpperCase() || 'U'}
+                  </Text>
+                </View>
               </View>
+              
+              {/* Bouton Caméra */}
+              <Pressable 
+                style={styles.cameraButton} 
+                onPress={handleOpenCamera}
+              >
+                <Text style={styles.cameraIcon}>📷</Text>
+              </Pressable>
             </View>
             
             {/* Infos utilisateur */}
@@ -180,7 +219,7 @@ const AccountScreen: React.FC = () => {
               <Text style={styles.actionArrow}>→</Text>
             </Pressable>
             
-            {/* Localisation (API future) */}
+            {/* Localisation */}
             <Pressable style={styles.actionItem} onPress={handleLocationSettings}>
               <View style={styles.actionIcon}>
                 <Text style={styles.actionEmoji}>📍</Text>
@@ -234,6 +273,48 @@ const AccountScreen: React.FC = () => {
 
         </View>
       </ScrollView>
+
+      {/* Modal Caméra */}
+      <Modal
+        visible={showCamera}
+        animationType="slide"
+        onRequestClose={() => setShowCamera(false)}
+      >
+        <View style={styles.cameraContainer}>
+          <CameraView style={styles.camera} facing={facing}>
+            <View style={styles.cameraOverlay}>
+              {/* Header avec bouton retour */}
+              <View style={styles.cameraHeader}>
+                <Pressable 
+                  style={styles.closeButton}
+                  onPress={() => setShowCamera(false)}
+                >
+                  <Text style={styles.closeButtonText}>✕</Text>
+                </Pressable>
+                <Text style={styles.cameraTitle}>Caméra</Text>
+                <View style={{ width: 40 }} />
+              </View>
+
+              {/* Contrôles en bas */}
+              <View style={styles.cameraControls}>
+                {/* Bouton flip camera */}
+                <Pressable 
+                  style={styles.flipButton}
+                  onPress={toggleCameraFacing}
+                >
+                  <Text style={styles.flipIcon}>🔄</Text>
+                </Pressable>
+
+                {/* Texte informatif */}
+                <Text style={styles.infoText}>Caméra active</Text>
+
+                {/* Placeholder pour l'équilibre */}
+                <View style={{ width: 50 }} />
+              </View>
+            </View>
+          </CameraView>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -257,8 +338,13 @@ const styles = StyleSheet.create({
     ...theme.shadows.md,
   },
   
-  avatarContainer: {
+  avatarWrapper: {
+    position: 'relative',
     marginBottom: theme.spacing.md,
+  },
+  
+  avatarContainer: {
+    position: 'relative',
   },
   
   avatar: {
@@ -274,6 +360,26 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: '700',
     color: theme.colors.primary,
+  },
+  
+  // Bouton caméra
+  cameraButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: -10,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: theme.colors.gradient2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: theme.colors.modal,
+    ...theme.shadows.md,
+  },
+  
+  cameraIcon: {
+    fontSize: 20,
   },
   
   userInfo: {
@@ -412,6 +518,78 @@ const styles = StyleSheet.create({
   
   infoValue: {
     fontWeight: '600',
+  },
+
+  // Styles pour la caméra
+  cameraContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  
+  camera: {
+    flex: 1,
+  },
+  
+  cameraOverlay: {
+    flex: 1,
+    justifyContent: 'space-between',
+    backgroundColor: 'transparent',
+  },
+  
+  cameraHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 50,
+    paddingHorizontal: 20,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  
+  closeButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  
+  closeButtonText: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  
+  cameraTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  
+  cameraControls: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingBottom: 40,
+    paddingHorizontal: 20,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  
+  flipButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  
+  flipIcon: {
+    fontSize: 24,
+  },
+  
+  infoText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
 
