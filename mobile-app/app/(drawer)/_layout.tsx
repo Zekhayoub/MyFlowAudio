@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Stack, router } from 'expo-router';
 import { View, Text, Modal, Pressable, StyleSheet, SafeAreaView } from 'react-native';
 import { useAuth } from '../../src/providers/AuthProvider';
+import { LikesProvider } from '../../src/contexts/LikesContext';
 import theme from '../../src/styles/theme';
 
 // Simuler le contexte de navigation pour DrawerActions
@@ -53,77 +54,79 @@ export default function DrawerLayout() {
   };
 
   return (
-    <>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="account" options={{ headerShown: false }} />
-        <Stack.Screen name="liked" options={{ headerShown: false }} />
-        <Stack.Screen name="search" options={{ headerShown: false }} />
-        <Stack.Screen name="settings" options={{ headerShown: false }} />
-      </Stack>
+    <LikesProvider>
+      <>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="account" options={{ headerShown: false }} />
+          <Stack.Screen name="liked" options={{ headerShown: false }} />
+          <Stack.Screen name="search" options={{ headerShown: false }} />
+          <Stack.Screen name="settings" options={{ headerShown: false }} />
+        </Stack>
 
-      {/* Menu Modal */}
-      <Modal
-        visible={isModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setIsModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <SafeAreaView style={styles.modalContainer}>
-            {/* Header du menu */}
-            <View style={styles.menuHeader}>
-              <Text style={styles.menuTitle}>Menu</Text>
-              <Pressable 
-                style={styles.closeButton}
-                onPress={() => setIsModalVisible(false)}
-              >
-                <Text style={styles.closeIcon}>✕</Text>
-              </Pressable>
-            </View>
-
-            {/* Items du menu */}
-            <View style={styles.menuItems}>
-              {menuItems.map((item) => (
-                <Pressable
-                  key={item.id}
-                  style={[
-                    styles.menuItem,
-                    item.id === 'index' && styles.menuItemActive
-                  ]}
-                  onPress={() => handleMenuPress(item.route)}
+        {/* Menu Modal */}
+        <Modal
+          visible={isModalVisible}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setIsModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <SafeAreaView style={styles.modalContainer}>
+              {/* Header du menu */}
+              <View style={styles.menuHeader}>
+                <Text style={styles.menuTitle}>Menu</Text>
+                <Pressable 
+                  style={styles.closeButton}
+                  onPress={() => setIsModalVisible(false)}
                 >
-                  <Text style={styles.menuIcon}>{item.icon}</Text>
-                  <Text style={[
-                    styles.menuLabel,
-                    item.id === 'index' && styles.menuLabelActive
-                  ]}>
-                    {item.label}
-                  </Text>
-                  {item.id === 'liked' && (
-                    <View style={styles.playButton}>
-                      <Text style={styles.playIcon}>▶</Text>
-                    </View>
-                  )}
+                  <Text style={styles.closeIcon}>✕</Text>
                 </Pressable>
-              ))}
-              
-              {/* Séparateur */}
-              <View style={styles.separator} />
-              
-              {/* Bouton Logout */}
-              <Pressable
-                style={styles.menuItem}
-                onPress={handleLogout}
-              >
-                <Text style={styles.menuIcon}>🚪</Text>
-                <Text style={styles.menuLabel}>Logout</Text>
-              </Pressable>
-            </View>
-          </SafeAreaView>
-        </View>
-      </Modal>
-    </>
+              </View>
+
+              {/* Items du menu */}
+              <View style={styles.menuItems}>
+                {menuItems.map((item) => (
+                  <Pressable
+                    key={item.id}
+                    style={[
+                      styles.menuItem,
+                      item.id === 'index' && styles.menuItemActive
+                    ]}
+                    onPress={() => handleMenuPress(item.route)}
+                  >
+                    <Text style={styles.menuIcon}>{item.icon}</Text>
+                    <Text style={[
+                      styles.menuLabel,
+                      item.id === 'index' && styles.menuLabelActive
+                    ]}>
+                      {item.label}
+                    </Text>
+                    {item.id === 'liked' && (
+                      <View style={styles.playButton}>
+                        <Text style={styles.playIcon}>▶</Text>
+                      </View>
+                    )}
+                  </Pressable>
+                ))}
+                
+                {/* Séparateur */}
+                <View style={styles.separator} />
+                
+                {/* Bouton Logout */}
+                <Pressable
+                  style={styles.menuItem}
+                  onPress={handleLogout}
+                >
+                  <Text style={styles.menuIcon}>🚪</Text>
+                  <Text style={styles.menuLabel}>Logout</Text>
+                </Pressable>
+              </View>
+            </SafeAreaView>
+          </View>
+        </Modal>
+      </>
+    </LikesProvider>
   );
 }
 

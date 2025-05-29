@@ -1,41 +1,73 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
   ScrollView,
   Pressable,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import Header from '../../src/components/common/Header';
 import SongCard from '../../src/components/common/SongCard';
-import mockData from '../../src/data/mockData';
 import { Song } from '../../src/types';
 import theme from '../../src/styles/theme';
 import globalStyles from '../../src/styles/globalStyles';
+import { useAudio } from '../../src/contexts/AudioContext';
+import { useLikes } from '../../src/contexts/LikesContext';
 
 const LikedScreen: React.FC = () => {
-  // Simulation des chansons aimées (basé sur play_count > 2000)
-  const likedSongs = mockData.songs.filter(song => song.play_count > 2000);
+  const { likedSongs, refreshLikes, isLoading } = useLikes();
+  const { setPlaylist, playTrack } = useAudio();
+  const router = useRouter();
+
+  // Rafraîchir les likes quand on arrive sur la page
+  useEffect(() => {
+    refreshLikes();
+  }, []);
 
   const handleSongPress = (song: Song) => {
-    console.log('Play song:', song.title);
-    // TODO: Démarrer lecture
+    const index = likedSongs.findIndex(s => s.id === song.id);
+    if (index !== -1) {
+      setPlaylist(likedSongs);
+      playTrack(index);
+    }
   };
 
   const handlePlayAll = () => {
-    console.log('Play all liked songs');
-    // TODO: Lecture de toutes les chansons aimées
+    if (likedSongs.length > 0) {
+      setPlaylist(likedSongs);
+      playTrack(0);
+    }
   };
 
   const handleShuffle = () => {
-    console.log('Shuffle liked songs');
-    // TODO: Lecture aléatoire
+    if (likedSongs.length > 0) {
+      const shuffled = [...likedSongs].sort(() => Math.random() - 0.5);
+      setPlaylist(shuffled);
+      playTrack(0);
+    }
   };
 
-  const handleDownload = () => {
-    console.log('Download liked songs');
-    // TODO: Téléchargement hors ligne
+  const navigateToSearch = () => {
+    router.push('/search');
   };
+
+  // Calculer les stats
+  const totalDuration = likedSongs.reduce((acc, song) => acc + (song.duration || 0), 0);
+  const totalMinutes = Math.floor(totalDuration / 60);
+  const totalPlays = likedSongs.reduce((acc, song) => acc + (song.play_count || 0), 0);
+
+  if (isLoading) {
+    return (
+      <View style={globalStyles.container}>
+        <Header title="Liked Songs" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.gradient1} />
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={globalStyles.container}>
@@ -47,21 +79,23 @@ const LikedScreen: React.FC = () => {
           <Text style={styles.heroEmoji}>😍</Text>
           <Text style={styles.heroTitle}>Liked Songs</Text>
           <Text style={styles.heroSubtitle}>
-            {likedSongs.length} chansons aimées
+            {likedSongs.length} chanson{likedSongs.length > 1 ? 's' : ''} aimée{likedSongs.length > 1 ? 's' : ''}
           </Text>
           
           {/* Action Buttons */}
-          <View style={styles.heroActions}>
-            <Pressable style={styles.playAllButton} onPress={handlePlayAll}>
-              <Text style={styles.playIcon}>▶️</Text>
-              <Text style={styles.playAllText}>Tout lire</Text>
-            </Pressable>
-            
-            <Pressable style={styles.shuffleButton} onPress={handleShuffle}>
-              <Text style={styles.shuffleIcon}>🔀</Text>
-              <Text style={styles.shuffleText}>Aléatoire</Text>
-            </Pressable>
-          </View>
+          {likedSongs.length > 0 && (
+            <View style={styles.heroActions}>
+              <Pressable style={styles.playAllButton} onPress={handlePlayAll}>
+                <Text style={styles.playIcon}>▶️</Text>
+                <Text style={styles.playAllText}>Tout lire</Text>
+              </Pressable>
+              
+              <Pressable style={styles.shuffleButton} onPress={handleShuffle}>
+                <Text style={styles.shuffleIcon}>🔀</Text>
+                <Text style={styles.shuffleText}>Aléatoire</Text>
+              </Pressable>
+            </View>
+          )}
         </View>
 
         <View style={styles.content}>
@@ -85,18 +119,8 @@ const LikedScreen: React.FC = () => {
                       <SongCard
                         song={song}
                         onPress={handleSongPress}
-                        showDuration={true}
+                        showLikeButton={true}
                       />
-                    </View>
-                    
-                    {/* Actions */}
-                    <View style={styles.songActions}>
-                      <Pressable style={styles.actionButton}>
-                        <Text style={styles.actionIcon}>❤️</Text>
-                      </Pressable>
-                      <Pressable style={styles.actionButton}>
-                        <Text style={styles.actionIcon}>⋯</Text>
-                      </Pressable>
                     </View>
                   </View>
                 ))}
@@ -111,7 +135,7 @@ const LikedScreen: React.FC = () => {
                 Explorez la musique et ajoutez vos favoris !
               </Text>
               
-              <Pressable style={styles.exploreButton}>
+              <Pressable style={styles.exploreButton} onPress={navigateToSearch}>
                 <Text style={styles.exploreButtonText}>
                   Découvrir la musique
                 </Text>
@@ -120,47 +144,47 @@ const LikedScreen: React.FC = () => {
           )}
 
           {/* Quick Actions */}
-          <View style={styles.quickActions}>
-            <Text style={globalStyles.sectionTitle}>Actions rapides</Text>
-            
-            <View style={styles.actionsGrid}>
-              <Pressable style={styles.actionCard} onPress={handleShuffle}>
-                <Text style={styles.actionCardIcon}>🔀</Text>
-                <Text style={styles.actionCardText}>Lecture aléatoire</Text>
-              </Pressable>
+          {likedSongs.length > 0 && (
+            <View style={styles.quickActions}>
+              <Text style={globalStyles.sectionTitle}>Actions rapides</Text>
               
-              <Pressable style={styles.actionCard} onPress={handleDownload}>
-                <Text style={styles.actionCardIcon}>📥</Text>
-                <Text style={styles.actionCardText}>Télécharger</Text>
-              </Pressable>
+              <View style={styles.actionsGrid}>
+                <Pressable style={styles.actionCard} onPress={handleShuffle}>
+                  <Text style={styles.actionCardIcon}>🔀</Text>
+                  <Text style={styles.actionCardText}>Lecture aléatoire</Text>
+                </Pressable>
+                
+                <Pressable style={styles.actionCard} onPress={refreshLikes}>
+                  <Text style={styles.actionCardIcon}>🔄</Text>
+                  <Text style={styles.actionCardText}>Actualiser</Text>
+                </Pressable>
+              </View>
             </View>
-          </View>
+          )}
 
           {/* Stats Section */}
-          <View style={styles.statsSection}>
-            <Text style={globalStyles.sectionTitle}>Statistiques</Text>
-            
-            <View style={styles.statsGrid}>
-              <View style={styles.statCard}>
-                <Text style={styles.statNumber}>{likedSongs.length}</Text>
-                <Text style={styles.statLabel}>Chansons</Text>
-              </View>
+          {likedSongs.length > 0 && (
+            <View style={styles.statsSection}>
+              <Text style={globalStyles.sectionTitle}>Statistiques</Text>
               
-              <View style={styles.statCard}>
-                <Text style={styles.statNumber}>
-                  {Math.floor(likedSongs.reduce((acc, song) => acc + (song.duration || 0), 0) / 60)}
-                </Text>
-                <Text style={styles.statLabel}>Minutes</Text>
-              </View>
-              
-              <View style={styles.statCard}>
-                <Text style={styles.statNumber}>
-                  {likedSongs.reduce((acc, song) => acc + song.play_count, 0)}
-                </Text>
-                <Text style={styles.statLabel}>Écoutes</Text>
+              <View style={styles.statsGrid}>
+                <View style={styles.statCard}>
+                  <Text style={styles.statNumber}>{likedSongs.length}</Text>
+                  <Text style={styles.statLabel}>Chansons</Text>
+                </View>
+                
+                <View style={styles.statCard}>
+                  <Text style={styles.statNumber}>{totalMinutes}</Text>
+                  <Text style={styles.statLabel}>Minutes</Text>
+                </View>
+                
+                <View style={styles.statCard}>
+                  <Text style={styles.statNumber}>{totalPlays}</Text>
+                  <Text style={styles.statLabel}>Écoutes</Text>
+                </View>
               </View>
             </View>
-          </View>
+          )}
         </View>
       </ScrollView>
     </View>
@@ -170,6 +194,12 @@ const LikedScreen: React.FC = () => {
 const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
+  },
+
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   // Hero Section
@@ -284,20 +314,6 @@ const styles = StyleSheet.create({
   
   songCardWrapper: {
     flex: 1,
-  },
-  
-  songActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  
-  actionButton: {
-    padding: theme.spacing.sm,
-    marginLeft: theme.spacing.sm,
-  },
-  
-  actionIcon: {
-    fontSize: 18,
   },
 
   // Empty State

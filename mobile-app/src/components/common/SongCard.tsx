@@ -3,15 +3,25 @@ import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
 import { Song } from '../../types';
 import theme from '../../styles/theme';
 import { useAudio } from '../../contexts/AudioContext';
+import { useLikes } from '../../contexts/LikesContext';
 
 interface SongCardProps {
   song: Song;
   onPress: (song: Song) => void;
+  showLikeButton?: boolean;
 }
 
-const SongCard: React.FC<SongCardProps> = ({ song, onPress }) => {
+const SongCard: React.FC<SongCardProps> = ({ song, onPress, showLikeButton = true }) => {
   const { currentTrack } = useAudio();
+  const { isLiked, toggleLike } = useLikes();
   const isPlaying = currentTrack?.id === song.id;
+  
+  // Pour les chansons Deezer, utiliser l'ID numérique au lieu de "deezer-X"
+  const songIdForLike = song.user_id === 'deezer' && song.id.startsWith('deezer-') 
+    ? song.id.replace('deezer-', '') 
+    : song.id;
+    
+  const liked = isLiked(songIdForLike);
   
   // Vérifier si c'est une chanson Deezer
   const isDeezerSong = song.user_id === 'deezer';
@@ -27,6 +37,11 @@ const SongCard: React.FC<SongCardProps> = ({ song, onPress }) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleLikePress = async (e: any) => {
+    e.stopPropagation(); // Empêcher le déclenchement du onPress parent
+    await toggleLike(song);
   };
 
   return (
@@ -69,6 +84,17 @@ const SongCard: React.FC<SongCardProps> = ({ song, onPress }) => {
           <Text style={styles.duration}>
             {formatDuration(song.duration)}
           </Text>
+        )}
+        {showLikeButton && (
+          <Pressable 
+            onPress={handleLikePress} 
+            style={styles.likeButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Text style={[styles.likeIcon, liked && styles.likeIconActive]}>
+              {liked ? '♥' : '♡'}
+            </Text>
+          </Pressable>
         )}
         {isPlaying ? (
           <View style={styles.nowPlayingIndicator}>
@@ -178,6 +204,19 @@ const styles = StyleSheet.create({
   duration: {
     ...theme.typography.caption,
     color: theme.colors.secondary,
+  },
+  
+  likeButton: {
+    padding: theme.spacing.xs,
+  },
+  
+  likeIcon: {
+    fontSize: 20,
+    color: theme.colors.secondary,
+  },
+  
+  likeIconActive: {
+    color: theme.colors.gradient1,
   },
   
   playIcon: {
