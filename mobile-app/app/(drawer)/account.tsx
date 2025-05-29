@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Modal,
   Alert,
+  Platform,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Camera, CameraView } from 'expo-camera';
@@ -335,7 +336,9 @@ const styles = StyleSheet.create({
     padding: theme.spacing.lg,
     marginBottom: theme.spacing.xl,
     alignItems: 'center',
-    ...theme.shadows.md,
+    ...(Platform.OS === 'web' 
+      ? { boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }
+      : theme.shadows.md),
   },
   
   avatarWrapper: {
@@ -375,7 +378,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 3,
     borderColor: theme.colors.modal,
-    ...theme.shadows.md,
+    ...(Platform.OS === 'web' 
+      ? { boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }
+      : theme.shadows.md),
   },
   
   cameraIcon: {
@@ -460,7 +465,9 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
-    ...theme.shadows.sm,
+    ...(Platform.OS === 'web' 
+      ? { boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }
+      : theme.shadows.sm),
   },
   
   actionIcon: {
@@ -500,7 +507,9 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.modal,
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.md,
-    ...theme.shadows.sm,
+    ...(Platform.OS === 'web' 
+      ? { boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }
+      : theme.shadows.sm),
   },
   
   infoItem: {
