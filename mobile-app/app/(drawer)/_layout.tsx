@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import { View, Text, Modal, Pressable, StyleSheet, SafeAreaView } from 'react-native';
-import { router } from 'expo-router';
+import { useAuth } from '../../src/providers/AuthProvider';
 import theme from '../../src/styles/theme';
 
 // Simuler le contexte de navigation pour DrawerActions
@@ -17,6 +17,7 @@ export const openDrawer = () => {
 
 export default function DrawerLayout() {
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const { signOut } = useAuth();
   
   // Connecter la fonction globale
   React.useEffect(() => {
@@ -38,6 +39,17 @@ export default function DrawerLayout() {
     console.log('Navigation vers:', route);
     setIsModalVisible(false);
     router.push(route as any);
+  };
+
+  const handleLogout = async () => {
+    try {
+      setIsModalVisible(false);
+      await signOut();
+      // Forcer la navigation vers login après déconnexion
+      router.replace('/(auth)/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   return (
@@ -95,6 +107,18 @@ export default function DrawerLayout() {
                   )}
                 </Pressable>
               ))}
+              
+              {/* Séparateur */}
+              <View style={styles.separator} />
+              
+              {/* Bouton Logout */}
+              <Pressable
+                style={styles.menuItem}
+                onPress={handleLogout}
+              >
+                <Text style={styles.menuIcon}>🚪</Text>
+                <Text style={styles.menuLabel}>Logout</Text>
+              </Pressable>
             </View>
           </SafeAreaView>
         </View>
@@ -187,5 +211,11 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     fontSize: 14,
     marginLeft: 2,
+  },
+  
+  separator: {
+    height: 1,
+    backgroundColor: theme.colors.border,
+    marginVertical: theme.spacing.md,
   },
 });
