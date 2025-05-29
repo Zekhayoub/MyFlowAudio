@@ -1,4 +1,3 @@
-
 import { Song, Playlist, PlaylistWithSongs, User } from '../types';
 
 // Mock User (utilisateur connecté)
@@ -11,7 +10,7 @@ export const mockUser: User = {
   is_premium: false,
 };
 
-// Mock Songs (basées sur votre interface de test)
+// Mock Songs avec fichiers audio (URLs publiques + locaux)
 export const mockSongs: Song[] = [
   {
     id: 'song-1',
@@ -22,12 +21,13 @@ export const mockSongs: Song[] = [
     album: 'Album Test',
     language: 'fr',
     image_path: '/images/joublie-tout.jpg',
-    song_path: '/audio/joublie-tout.mp3',
+    // URL audio publique pour test
+    song_path: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav',
     genre: 'Pop',
     track_number: 1,
     release_date: '2024-01-01',
-    duration: 210, // 3:30 en secondes
-    play_count: 1250,
+    duration: 210000, // 3:30 en millisecondes
+    play_count: 3200,
   },
   {
     id: 'song-2',
@@ -38,11 +38,12 @@ export const mockSongs: Song[] = [
     album: 'Single',
     language: 'fr',
     image_path: '/images/ciel.jpg',
-    song_path: '/audio/ciel.mp3',
+    // URL audio publique - exemple de musique libre
+    song_path: 'https://www.soundjay.com/misc/sounds/bell-ringing-04.wav',
     genre: 'Rap',
     track_number: 1,
     release_date: '2024-01-15',
-    duration: 195, // 3:15 en secondes
+    duration: 195000, // 3:15 en millisecondes
     play_count: 2100,
   },
   {
@@ -54,11 +55,12 @@ export const mockSongs: Song[] = [
     album: 'Collaboration',
     language: 'fr',
     image_path: '/images/spider.jpg',
-    song_path: '/audio/spider.mp3',
+    // Fichier local (vous placerez vos mp3 dans assets/audio/)
+    song_path: 'spider.mp3',
     genre: 'Rap',
     track_number: 2,
     release_date: '2024-01-20',
-    duration: 180, // 3:00 en secondes
+    duration: 180000, // 3:00 en millisecondes
     play_count: 1800,
   },
   {
@@ -70,16 +72,51 @@ export const mockSongs: Song[] = [
     album: 'IM NAYEON',
     language: 'ko',
     image_path: '/images/pop.jpg',
-    song_path: '/audio/pop.mp3',
+    // Fichier local
+    song_path: 'pop.mp3',
     genre: 'K-Pop',
     track_number: 3,
     release_date: '2024-01-22',
-    duration: 165, // 2:45 en secondes
-    play_count: 3200,
+    duration: 165000, // 2:45 en millisecondes
+    play_count: 1250,
+  },
+  {
+    id: 'song-5',
+    created_at: '2024-02-01T12:00:00Z',
+    user_id: 'user-1',
+    title: 'Bella',
+    author: 'Maître GIMS',
+    album: 'Subliminal',
+    language: 'fr',
+    image_path: '/images/bella.jpg',
+    // URL audio publique
+    song_path: 'https://www.soundjay.com/misc/sounds/bell-ringing-03.wav',
+    genre: 'Pop',
+    track_number: 4,
+    release_date: '2023-05-10',
+    duration: 212000, // 3:32 en millisecondes
+    play_count: 4500,
+  },
+  {
+    id: 'song-6',
+    created_at: '2024-02-05T14:30:00Z',
+    user_id: 'user-2',
+    title: 'Summer Vibes',
+    author: 'Artist Example',
+    album: 'Test Album',
+    language: 'en',
+    image_path: '/images/summer.jpg',
+    // Fichier local que vous ajouterez
+    song_path: 'summer-vibes.mp3',
+    genre: 'Pop',
+    track_number: 5,
+    release_date: '2024-02-01',
+    duration: 198000, // 3:18 en millisecondes
+    play_count: 2800,
   },
 ];
 
-// Mock Playlists (basées sur votre interface)
+// Mock Playlists (inchangées)
 export const mockPlaylists: Playlist[] = [
   {
     id: 'playlist-1',
@@ -131,15 +168,12 @@ export const mockPlaylists: Playlist[] = [
 // Mock Playlists avec chansons
 export const mockPlaylistsWithSongs: PlaylistWithSongs[] = mockPlaylists.map((playlist, index) => ({
   ...playlist,
-  songs: mockSongs.slice(0, (index % 3) + 1), // Différent nombre de chansons par playlist
-  song_count: (index % 3) + 1,
+  songs: mockSongs.slice(0, (index % 4) + 2), // 2 à 5 chansons par playlist
+  song_count: (index % 4) + 2,
 }));
 
-// Mock données pour "Liked Songs"
-export const mockLikedSongs: Song[] = [
-  mockSongs[0], // J'oublie tout
-  mockSongs[2], // SPIDER
-];
+// Mock données pour "Liked Songs" (basé sur play_count > 2000)
+export const mockLikedSongs: Song[] = mockSongs.filter(song => song.play_count > 2000);
 
 // Fonctions utilitaires pour les mocks
 export const getMockSongById = (id: string): Song | undefined => {
@@ -150,10 +184,11 @@ export const getMockPlaylistById = (id: string): PlaylistWithSongs | undefined =
   return mockPlaylistsWithSongs.find(playlist => playlist.id === id);
 };
 
-export const formatDuration = (seconds: number): string => {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+export const formatDuration = (milliseconds: number): string => {
+  const totalSeconds = Math.floor(milliseconds / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
 // Export par défaut avec toutes les données
