@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,30 +6,115 @@ import {
   Pressable,
   TextInput,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
+import { debounce } from 'lodash';
 import Header from '../../src/components/common/Header';
 import SongCard from '../../src/components/common/SongCard';
-import mockData from '../../src/data/mockData';
 import { Song } from '../../src/types';
 import theme from '../../src/styles/theme';
 import globalStyles from '../../src/styles/globalStyles';
+import { useAudio } from '../../src/contexts/AudioContext';
+import { songsApi } from '../../src/services/api/songs';
 
 const SearchScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'songs' | 'artists' | 'albums'>('all');
+  const [searchResults, setSearchResults] = useState<Song[]>([]);
+  const [allSongs, setAllSongs] = useState<Song[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  const { setPlaylist, playTrack } = useAudio();
 
-  // Filtrer les chansons selon la recherche
-  const filteredSongs = mockData.songs.filter(song => {
-    const query = searchQuery.toLowerCase();
-    return (
-      song.title.toLowerCase().includes(query) ||
-      song.author.toLowerCase().includes(query) ||
-      (song.album && song.album.toLowerCase().includes(query))
-    );
+  // Charger toutes les chansons au montage pour les suggestions
+  useEffect(() => {
+    loadAllSongs();
+  }, []);
+
+  const loadAllSongs = async () => {
+    try {
+      const songs = await songsApi.getAll();
+      setAllSongs(songs);
+    } catch (error) {
+      console.error('Error loading songs:', error);
+    }
+  };
+
+  // Fonction de recherche avec debounce
+  const performSearch = useCallback(
+    debounce(async (query: string) => {
+      if (query.trim().length === 0) {
+        setSearchResults([]);
+        setIsSearching(false);
+        return;
+      }
+
+      setIsSearching(true);
+      setError(null);
+
+      try {
+        // Utiliser l'API Deezer via l'app web
+        const results = await songsApi.searchDeezer(query);
+        
+        // Transformer les résultats Deezer au format Song
+        const formattedResults = results.map((item: any, index: number) => ({
+          id: item.id?.toString() || `deezer-${index}`,
+          user_id: 'deezer',
+          title: item.title || 'Titre inconnu',
+          author: item.artist?.name || 'Artiste inconnu',
+          album: item.album?.title || '',
+          image_path: item.album?.cover_medium || item.artist?.picture_medium || '',
+          song_path: item.preview || '',
+          created_at: new Date().toISOString(),
+          duration: item.duration || 30, // Deezer renvoie la durée en secondes
+        }));
+        
+        setSearchResults(formattedResults);
+      } catch (error) {
+        console.error('Search error:', error);
+        setError('Impossible de se connecter à Deezer');
+        
+        // Fallback : recherche locale dans les chansons déjà chargées
+        const localResults = allSongs.filter(song => {
+          const q = query.toLowerCase();
+          return (
+            song.title.toLowerCase().includes(q) ||
+            song.author.toLowerCase().includes(q) ||
+            (song.album && song.album.toLowerCase().includes(q))
+          );
+        });
+        
+        if (localResults.length > 0) {
+          setSearchResults(localResults);
+          setError('Recherche Deezer indisponible - Résultats locaux affichés');
+        } else {
+          setSearchResults([]);
+        }
+      } finally {
+        setIsSearching(false);
+      }
+    }, 500),
+    [allSongs]
+  );
+
+  // Effect pour déclencher la recherche
+  useEffect(() => {
+    performSearch(searchQuery);
+  }, [searchQuery, performSearch]);
+
+  // Filtrer les résultats selon le filtre actif
+  const filteredResults = searchResults.filter(song => {
+    if (activeFilter === 'all') return true;
+    // Pour l'instant, on affiche toutes les chansons pour tous les filtres
+    // TODO: Implémenter les filtres artists et albums quand l'API le supportera
+    return true;
   });
 
-  const recentSearches = ['GIMS', 'Rap français', 'Pop music', 'Chill vibes'];
+  // Obtenir des recherches récentes à partir des chansons
+  const recentSearches = [...new Set(allSongs.slice(0, 10).map(s => s.author))].slice(0, 4);
   
+  // Genres populaires basés sur les artistes
   const trendingGenres = [
     { name: 'Pop', emoji: '🎵', color: theme.colors.gradient1 },
     { name: 'Rap', emoji: '🎤', color: '#DC2626' },
@@ -47,8 +132,23 @@ const SearchScreen: React.FC = () => {
   ];
 
   const handleSongPress = (song: Song) => {
-    console.log('Play song:', song.title);
-    // TODO: Démarrer lecture
+    console.log('Playing:', song.title, 'by', song.author);
+    
+    // Si c'est une chanson Deezer (preview de 30 secondes)
+    if (song.user_id === 'deezer' && song.song_path) {
+      // Créer une playlist temporaire avec juste cette chanson
+      setPlaylist([song]);
+      playTrack(0);
+    } else {
+      // Chanson locale : utiliser la playlist complète
+      const playlist = searchQuery ? searchResults : allSongs;
+      const index = playlist.findIndex(s => s.id === song.id);
+      
+      if (index !== -1) {
+        setPlaylist(playlist);
+        playTrack(index);
+      }
+    }
   };
 
   const handleSearchSelect = (search: string) => {
@@ -57,6 +157,16 @@ const SearchScreen: React.FC = () => {
 
   const handleGenrePress = (genre: string) => {
     setSearchQuery(genre);
+  };
+
+  const handleSurpriseMe = () => {
+    // Jouer une chanson aléatoire
+    if (allSongs.length > 0) {
+      const randomIndex = Math.floor(Math.random() * allSongs.length);
+      const randomSong = allSongs[randomIndex];
+      setPlaylist(allSongs);
+      playTrack(randomIndex);
+    }
   };
 
   return (
@@ -76,6 +186,8 @@ const SearchScreen: React.FC = () => {
                 placeholderTextColor={theme.colors.secondary}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
+                autoCorrect={false}
+                autoCapitalize="none"
               />
               {searchQuery.length > 0 && (
                 <Pressable onPress={() => setSearchQuery('')}>
@@ -114,12 +226,24 @@ const SearchScreen: React.FC = () => {
           {searchQuery.length > 0 ? (
             <View style={styles.resultsSection}>
               <Text style={globalStyles.sectionTitle}>
-                Résultats ({filteredSongs.length})
+                {isSearching ? 'Recherche...' : `Résultats (${filteredResults.length})`}
               </Text>
               
-              {filteredSongs.length > 0 ? (
+              {isSearching ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color={theme.colors.gradient1} />
+                </View>
+              ) : error ? (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyIcon}>⚠️</Text>
+                  <Text style={styles.emptyTitle}>{error}</Text>
+                  <Text style={styles.emptySubtitle}>
+                    Résultats de recherche locale
+                  </Text>
+                </View>
+              ) : filteredResults.length > 0 ? (
                 <View style={styles.songsContainer}>
-                  {filteredSongs.map((song) => (
+                  {filteredResults.map((song) => (
                     <SongCard
                       key={song.id}
                       song={song}
@@ -140,23 +264,22 @@ const SearchScreen: React.FC = () => {
           ) : (
             <>
               {/* Recent Searches */}
-              <View style={styles.section}>
-                <Text style={globalStyles.sectionTitle}>Recherches récentes</Text>
-                
-                {recentSearches.map((search, index) => (
-                  <Pressable
-                    key={index}
-                    style={styles.recentItem}
-                    onPress={() => handleSearchSelect(search)}
-                  >
-                    <Text style={styles.recentIcon}>🕒</Text>
-                    <Text style={styles.recentText}>{search}</Text>
-                    <Pressable style={styles.removeButton}>
-                      <Text style={styles.removeIcon}>✕</Text>
+              {recentSearches.length > 0 && (
+                <View style={styles.section}>
+                  <Text style={globalStyles.sectionTitle}>Artistes populaires</Text>
+                  
+                  {recentSearches.map((search, index) => (
+                    <Pressable
+                      key={index}
+                      style={styles.recentItem}
+                      onPress={() => handleSearchSelect(search)}
+                    >
+                      <Text style={styles.recentIcon}>👤</Text>
+                      <Text style={styles.recentText}>{search}</Text>
                     </Pressable>
-                  </Pressable>
-                ))}
-              </View>
+                  ))}
+                </View>
+              )}
 
               {/* Trending Genres */}
               <View style={styles.section}>
@@ -180,12 +303,12 @@ const SearchScreen: React.FC = () => {
               <View style={styles.section}>
                 <Text style={globalStyles.sectionTitle}>Découvrir</Text>
                 
-                <Pressable style={styles.actionCard}>
+                <Pressable style={styles.actionCard} onPress={handleSurpriseMe}>
                   <Text style={styles.actionIcon}>🎲</Text>
                   <View style={styles.actionContent}>
                     <Text style={styles.actionTitle}>Surprise-moi !</Text>
                     <Text style={styles.actionSubtitle}>
-                      Découvrez de nouveaux sons
+                      Jouer une chanson aléatoire
                     </Text>
                   </View>
                 </Pressable>
@@ -195,7 +318,7 @@ const SearchScreen: React.FC = () => {
                   <View style={styles.actionContent}>
                     <Text style={styles.actionTitle}>Radio</Text>
                     <Text style={styles.actionSubtitle}>
-                      Stations basées sur vos goûts
+                      Bientôt disponible
                     </Text>
                   </View>
                 </Pressable>
@@ -284,6 +407,11 @@ const styles = StyleSheet.create({
   
   songsContainer: {
     gap: theme.spacing.sm,
+  },
+  
+  loadingContainer: {
+    padding: theme.spacing.xl,
+    alignItems: 'center',
   },
   
   emptyState: {
