@@ -8,14 +8,14 @@ export default function AuthLayout() {
         headerStyle: {
           backgroundColor: theme.colors.background,
         },
-        headerTintColor: theme.colors.text,
+        headerTintColor: theme.colors.primary,
         headerTitleStyle: {
           fontWeight: '600',
         },
         headerTitleAlign: 'center',
         headerShadowVisible: false,
         contentStyle: {
-          backgroundColor: '#f5f5f5',
+          backgroundColor: theme.colors.background, // Changé de #f5f5f5 à fond sombre
         },
       }}
     >
@@ -23,14 +23,14 @@ export default function AuthLayout() {
         name="login" 
         options={{
           title: 'Login',
-          headerShown: true,
+          headerShown: false, // Caché car on veut le style custom
         }} 
       />
       <Stack.Screen 
         name="register" 
         options={{
           title: 'Register',
-          headerShown: true,
+          headerShown: false, // Caché car on veut le style custom
         }} 
       />
     </Stack>

@@ -42,7 +42,6 @@ export default function RegisterScreen() {
           error.message || 'Impossible de créer le compte'
         );
       } else {
-        // Rediriger vers login après inscription réussie
         router.replace('/(auth)/login');
       }
     } catch (error) {
@@ -50,6 +49,10 @@ export default function RegisterScreen() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleBackToLogin = () => {
+    router.back();
   };
 
   return (
@@ -60,41 +63,57 @@ export default function RegisterScreen() {
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.formContainer}>
-          <Text style={styles.title}>Register</Text>
+        <View style={styles.mainContainer}>
+          <View style={styles.formCard}>
+            <Text style={styles.title}>Register</Text>
 
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Your email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Your email"
+                placeholderTextColor={theme.colors.secondary}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Password</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Your password"
+                placeholderTextColor={theme.colors.secondary}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoCapitalize="none"
+              />
+            </View>
+
+            <Pressable onPress={handleBackToLogin}>
+              <Text style={styles.backToLoginLink}>
+                Already have an account? Log in
+              </Text>
+            </Pressable>
+
+            <Pressable 
+              style={[styles.signUpButton, isLoading && styles.signUpButtonDisabled]}
+              onPress={handleSignUp}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.signUpButtonText}>Sign up</Text>
+              )}
+            </Pressable>
           </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Your password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
-            />
-          </View>
-
-          <Pressable 
-            style={styles.signUpButton}
-            onPress={handleSignUp}
-          >
-            <Text style={styles.signUpButtonText}>Sign up</Text>
-          </Pressable>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -104,25 +123,43 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.background,
   },
   
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 20,
   },
   
-  formContainer: {
+  mainContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 40,
+  },
+  
+  formCard: {
     width: '100%',
     maxWidth: 400,
     alignSelf: 'center',
+    backgroundColor: 'rgba(64, 64, 64, 0.3)',
+    borderRadius: theme.borderRadius.xl,
+    padding: 32,
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
   },
   
   title: {
     fontSize: 32,
     fontWeight: '700',
-    color: theme.colors.text,
+    color: theme.colors.gradient2,
     textAlign: 'center',
     marginBottom: 40,
   },
@@ -134,32 +171,45 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '500',
-    color: theme.colors.text,
+    color: theme.colors.primary,
     marginBottom: 8,
   },
   
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.button_and_input,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
+    borderColor: theme.colors.borderLight,
+    borderRadius: theme.borderRadius.md,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    color: theme.colors.text,
+    color: theme.colors.primary,
+  },
+  
+  backToLoginLink: {
+    color: theme.colors.gradient2,
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 20,
+    marginBottom: 30,
+    textDecorationLine: 'underline',
   },
   
   signUpButton: {
     backgroundColor: theme.colors.gradient1,
-    borderRadius: 8,
+    borderRadius: theme.borderRadius.md,
     paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 30,
+    marginTop: 10,
   },
   
   signUpButtonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: '600',
+  },
+  
+  signUpButtonDisabled: {
+    opacity: 0.7,
   },
 });
