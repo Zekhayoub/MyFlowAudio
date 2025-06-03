@@ -3,7 +3,6 @@ import getSongsWithDeezer from '@/actions/getAudioByAPI';
 import { SongSearchSchema, validateData } from '@/lib/validations';
 import type { SongSearchData } from '@/lib/validations';
 
-// Handle CORS preflight requests
 export async function OPTIONS(request: Request) {
   return new Response(null, {
     status: 200,
@@ -15,9 +14,7 @@ export async function OPTIONS(request: Request) {
   });
 }
 
-// ✅ TYPED API ENDPOINT - Secure song search with validation
 export async function GET(request: Request) {
-  // CORS headers
   const headers = new Headers();
   headers.set('Access-Control-Allow-Origin', '*');
   headers.set('Access-Control-Allow-Methods', 'GET');
@@ -28,10 +25,8 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const queryParam = searchParams.get('q') || searchParams.get('query') || '';
     
-    // Prepare data for validation
     const searchData = { query: queryParam };
 
-    // ✅ USER-SUBMITTED DATA VALIDATION - Validate search query
     const validation = validateData(SongSearchSchema, searchData);
     if (!validation.success) {
       return NextResponse.json(
@@ -45,13 +40,10 @@ export async function GET(request: Request) {
       );
     }
 
-    // ✅ TYPE-SAFE DATA EXTRACTION - TypeScript ensures correct types
     const { query } = validation.data as SongSearchData;
 
-    // Call your existing search function
     const songs = await getSongsWithDeezer(query);
     
-    // ✅ TYPED RESPONSE - Consistent API response format
     return NextResponse.json({
       success: true,
       data: {

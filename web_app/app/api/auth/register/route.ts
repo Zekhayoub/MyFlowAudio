@@ -4,7 +4,6 @@ import { cookies } from 'next/headers';
 import { RegisterSchema, validateData } from '@/lib/validations';
 import type { RegisterData } from '@/lib/validations';
 
-// ✅ TYPED API ENDPOINT - Secure registration with validation
 export async function POST(request: Request) {
   const headers = new Headers();
   headers.set('Content-Type', 'application/json');
@@ -12,7 +11,6 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    // ✅ USER-SUBMITTED DATA VALIDATION - Validate registration data
     const validation = validateData(RegisterSchema, body);
     if (!validation.success) {
       return NextResponse.json(
@@ -24,19 +22,18 @@ export async function POST(request: Request) {
       );
     }
 
-    // ✅ TYPE-SAFE DATA EXTRACTION - TypeScript ensures correct types
     const { email, password, full_name } = validation.data as RegisterData;
 
     const supabase = createRouteHandlerClient({ cookies });
 
-    // Register with Supabase Auth
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: `${request.headers.get('origin')}/auth/callback`,
         data: {
-          full_name: full_name, // Store full name in user metadata
+          full_name: full_name, 
         }
       },
     });
@@ -48,7 +45,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // ✅ COMPATIBLE RESPONSE - Keep your existing format
     return NextResponse.json({
       user: data.user,
       message: 'Vérifiez votre email pour confirmer votre compte',

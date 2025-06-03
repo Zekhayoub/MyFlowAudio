@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { LoginSchema, validateData } from '@/lib/validations';
 import type { LoginData } from '@/lib/validations';
 
-// Keep your existing createClient setup
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -20,7 +20,7 @@ export async function OPTIONS(request: Request) {
   });
 }
 
-// ✅ TYPED API ENDPOINT - Secure and fully typed communication
+
 export async function POST(request: Request) {
   const headers = new Headers();
   headers.set('Access-Control-Allow-Origin', '*');
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    // ✅ USER-SUBMITTED DATA VALIDATION - Validate login credentials
+
     const validation = validateData(LoginSchema, body);
     if (!validation.success) {
       return NextResponse.json(
@@ -41,7 +41,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // ✅ TYPE-SAFE DATA EXTRACTION - TypeScript knows exact types
     const { email, password } = validation.data as LoginData;
 
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -57,7 +56,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // ✅ COMPATIBLE RESPONSE - Keep your existing format for mobile app
     return NextResponse.json({
       user: data.user,
       session: data.session,
