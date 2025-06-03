@@ -64,52 +64,77 @@ export const LikesProvider: React.FC<LikesProviderProps> = ({ children }) => {
   };
 
   const toggleLike = async (song: Song) => {
-    const songId = song.id;
-    const wasLiked = isLiked(songId);
+    const isDeezerSong = song.user_id === 'deezer';
+    
+    // Pour l'affichage UI, utiliser l'ID simplifié pour Deezer
+    const displaySongId = isDeezerSong && song.id.startsWith('deezer-') 
+      ? song.id.replace('deezer-', '') 
+      : song.id;
+    
+    const wasLiked = isLiked(displaySongId);
+
+    console.log('Toggle like for song:', {
+      id: song.id,
+      displayId: displaySongId,
+      isDeezer: isDeezerSong,
+      wasLiked
+    });
 
     // Mise à jour optimiste de l'UI
     if (wasLiked) {
-      setLikedSongIds(prev => prev.filter(id => id !== songId));
-      setLikedSongs(prev => prev.filter(s => s.id !== songId));
+      setLikedSongIds(prev => prev.filter(id => id !== displaySongId));
+      setLikedSongs(prev => prev.filter(s => s.id !== displaySongId));
     } else {
-      setLikedSongIds(prev => [...prev, songId]);
-      setLikedSongs(prev => [...prev, song]);
+      setLikedSongIds(prev => [...prev, displaySongId]);
+      setLikedSongs(prev => [...prev, { ...song, id: displaySongId }]);
     }
 
     try {
       if (wasLiked) {
-        // Unlike
-        const success = await likesApi.unlikeSong(songId);
+        // Unlike - utiliser l'ID de notre base de données
+        const success = await likesApi.unlikeSong(displaySongId);
         if (!success) {
           // Reverser si échec
-          setLikedSongIds(prev => [...prev, songId]);
-          setLikedSongs(prev => [...prev, song]);
+          setLikedSongIds(prev => [...prev, displaySongId]);
+          setLikedSongs(prev => [...prev, { ...song, id: displaySongId }]);
           alert('Erreur lors du retrait du like');
         }
       } else {
         // Like
-        // Pour les chansons Deezer qui n'ont pas encore d'ID dans notre DB
-        const isDeezerNewSong = song.user_id === 'deezer' && !songId.includes('-');
+        let result;
         
-        const result = await likesApi.likeSong(
-          isDeezerNewSong ? null : songId,
-          isDeezerNewSong ? song : undefined
-        );
+        if (isDeezerSong) {
+          console.log('Liking Deezer song with original ID:', song.id);
+          // Pour les chansons Deezer : passer null comme songId et toutes les données
+          result = await likesApi.likeSong(null, {
+            title: song.title,
+            author: song.author,
+            album: song.album || null,
+            language: song.language || 'Others',
+            image_path: song.image_path || '',
+            song_path: song.song_path || '',
+            genre: song.genre || 'Unknown',
+            deezer_id: song.id // L'ID original Deezer (ex: "deezer-0")
+          });
+        } else {
+          // Pour les chansons normales
+          result = await likesApi.likeSong(song.id);
+        }
 
         if (!result.success) {
           // Reverser si échec
-          setLikedSongIds(prev => prev.filter(id => id !== songId));
-          setLikedSongs(prev => prev.filter(s => s.id !== songId));
+          setLikedSongIds(prev => prev.filter(id => id !== displaySongId));
+          setLikedSongs(prev => prev.filter(s => s.id !== displaySongId));
           alert(result.error || 'Erreur lors du like');
-        } else if (result.songId && result.songId !== songId) {
-          // Si l'API a créé une nouvelle chanson avec un nouvel ID
+        } else if (result.songId && isDeezerSong) {
+          // Si l'API a créé une nouvelle chanson avec un nouvel ID UUID
           // Mettre à jour l'ID dans notre état local
-          const updatedSong = { ...song, id: result.songId };
+          console.log('Deezer song created with new UUID:', result.songId);
           setLikedSongs(prev => 
-            prev.map(s => s.id === songId ? updatedSong : s)
+            prev.map(s => s.id === displaySongId ? { ...s, id: result.songId! } : s)
           );
           setLikedSongIds(prev => 
-            prev.map(id => id === songId ? result.songId! : id)
+            prev.map(id => id === displaySongId ? result.songId! : id)
           );
         }
       }
@@ -117,11 +142,11 @@ export const LikesProvider: React.FC<LikesProviderProps> = ({ children }) => {
       console.error('Erreur toggle like:', error);
       // Reverser en cas d'erreur
       if (wasLiked) {
-        setLikedSongIds(prev => [...prev, songId]);
-        setLikedSongs(prev => [...prev, song]);
+        setLikedSongIds(prev => [...prev, displaySongId]);
+        setLikedSongs(prev => [...prev, { ...song, id: displaySongId }]);
       } else {
-        setLikedSongIds(prev => prev.filter(id => id !== songId));
-        setLikedSongs(prev => prev.filter(s => s.id !== songId));
+        setLikedSongIds(prev => prev.filter(id => id !== displaySongId));
+        setLikedSongs(prev => prev.filter(s => s.id !== displaySongId));
       }
       alert('Erreur de connexion');
     }
