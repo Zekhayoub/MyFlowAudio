@@ -1,0 +1,105 @@
+/* @tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+:root {
+  height: 100%;
+  background-color: black;
+  color-scheme: dark;
+} */
+
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+:root {
+  height: 100%;
+  background-color: black;
+  color-scheme: dark;
+}
+
+/* Scrollbar personnalisée */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #404040;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #525252;
+}
+
+/* Animation delays pour les barres sonores */
+.animation-delay-200 {
+  animation-delay: 200ms;
+}
+
+.animation-delay-400 {
+  animation-delay: 400ms;
+}
+
+/* Amélioration des transitions */
+@layer utilities {
+  .transition-basic {
+    @apply transition-all duration-200 ease-in-out;
+  }
+}
+
+/* Loader musical sans JavaScript */
+.music-loader {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 40px;
+}
+
+.music-bar {
+  width: 4px;
+  height: 100%;
+  background-color: #2563EB; /* gradient2 color */
+  animation: music-wave 1.2s ease-in-out infinite;
+  border-radius: 2px;
+}
+
+.music-bar:nth-child(1) {
+  animation-delay: 0s;
+  height: 20px;
+}
+
+.music-bar:nth-child(2) {
+  animation-delay: 0.2s;
+  height: 30px;
+}
+
+.music-bar:nth-child(3) {
+  animation-delay: 0.4s;
+  height: 25px;
+}
+
+.music-bar:nth-child(4) {
+  animation-delay: 0.6s;
+  height: 35px;
+}
+
+@keyframes music-wave {
+  0%, 100% {
+    transform: scaleY(0.5);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
