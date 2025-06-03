@@ -1,41 +1,46 @@
-
 "use server";
 
-import { z } from "zod";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { CreatePlaylistSchema, validateData } from "@/lib/validations";
+import type { ValidationResult } from "@/lib/validations";
 
-
-const PlaylistSchema = z.object({
-  name: z.string().min(1, "Playlist name is required"),
-  user_id: z.string().uuid("Invalid user ID"),
-});
-
-export async function createPlaylist(formData: FormData) {
-
+export async function createPlaylist(formData: FormData): Promise<ValidationResult<void>> {
   const rawData = {
     name: formData.get("name"),
     user_id: formData.get("user_id"),
   };
 
-  const result = PlaylistSchema.safeParse(rawData);
-  if (!result.success) {
-    console.error("Validation failed:", result.error.flatten().fieldErrors);
-    return;
+
+  const validation = validateData(CreatePlaylistSchema, rawData);
+  if (!validation.success) {
+    return {
+      success: false,
+      errors: validation.errors
+    };
   }
 
-  const { name, user_id } = result.data;
+  const { name, user_id } = validation.data!;
 
-  const supabase = createServerComponentClient({ cookies });
-  const { error } = await supabase
-    .from("playlists")
-    .insert([{ name, user_id }]);
+  try {
+    const supabase = createServerComponentClient({ cookies });
+    const { error } = await supabase
+      .from("playlists")
+      .insert([{ name, user_id }]);
 
-  if (!error) {
+    if (error) {
+      return {
+        success: false,
+        errors: { general: [error.message] }
+      };
+    }
+
     redirect("/?created=1");
-  } else {
-    console.error("Supabase error:", error.message);
+  } catch (error) {
+    return {
+      success: false,
+      errors: { general: ["An unexpected error occurred"] }
+    };
   }
 }
-
