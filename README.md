@@ -38,17 +38,30 @@ Application de streaming audio développée avec next.js, typeScript et supabase
 
 ##  Architecture du projet
 
-web_app/
- ├── actions/          # Server actions (next.js)
- ├── app/             # Routes et pages (App Router)
- ├── components/      # Composants React
- │   ├── features/    # Composants métier
- │   └── ui/         # Composants UI réutilisables
- ├── hooks/          # Custom hooks React
- ├── lib/            # Utilitaires et validations
- └── providers/          # Context providers
+
+1) actions/          # Server actions (next.js)
+2) app/             # Routes et pages (App Router)
+3) components/      # Composants React
+3.1) features/    # Composants métier
+3.2) ui/         # Composants UI réutilisables
+4) hooks/          # Custom hooks React
+5) lib/            # Utilitaires et validations
+6) providers/          # Context providers
 
 
 
+## Documentation architecture
+
+### Diagrammes de classes
+
+#### 1. Modèle du domaine métier
+
+<p align="center">
+  <img src="images/1_metier.png" width="700" height="450">
+
+</p>
+
+
+Ce diagramme présente les entités principale de l'application et leurs relations.
 
 
