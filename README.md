@@ -104,6 +104,14 @@ Flux complet depuis le clic utilisateur jusqu'à la lecture audio.
 
 
 
+#### 2. Authentification utilisateur
+
+<p align="center">
+  <img src="images/4_authentification_V8.png" width="600" height="700">
+
+</p>
+
+Etapes de connexion avec gestion des états et erreurs.
 
 
 
