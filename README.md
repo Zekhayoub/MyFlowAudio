@@ -115,6 +115,19 @@ Etapes de connexion avec gestion des états et erreurs.
 
 
 
+## Sécurité
+
+- **Authentification** gérée par Supabase Auth
+- **Validation des données** côté serveur avec Zod
+
+## Patterns et bonnes pratiques
+
+### Patterns utilisés
+
+- **Provider Pattern** : Pour la gestion globale de l'état
+- **Custom Hooks** : Réutilisation de la logique
+- **Server Actions** : Pour les mutations de données
+- **Composition** : Composants modulaires et réutilisables
 
 
 
