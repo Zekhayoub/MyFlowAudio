@@ -4,7 +4,7 @@ Application de streaming audio développée avec next.js, typeScript et supabase
 
 ##  Fonctionnalitées principales
 
--  **Lecteur audio ** avec contrôles (play, pause, skip, volume)
+-  **Lecteur audio** avec contrôles (play, pause, skip, volume)
 -  **Recherche de music** via l'API Deezer et base de données locale
 -  **Système de favoris** pour sauvegarder vos chansons préférées
 - **Playlists personnalisées** pour organiser votre musique (pas fini)
@@ -87,7 +87,20 @@ Vue d'ensemble de la hiérarchie des composants React et leurs interactions.
 
 
 
+### Diagrammes de séquence
 
+
+
+#### 1. Lecture d'une chanson
+
+
+<p align="center">
+  <img src="images/3_lecture_chanson.png" width="600" height="700">
+
+</p>
+
+
+Flux complet depuis le clic utilisateur jusqu'à la lecture audio.
 
 
 
