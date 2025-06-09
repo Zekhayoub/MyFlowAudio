@@ -57,11 +57,50 @@ Application de streaming audio développée avec next.js, typeScript et supabase
 #### 1. Modèle du domaine métier
 
 <p align="center">
-  <img src="images/1_metier.png" width="700" height="450">
+  <img src="images/1_metier.png" width="500" height="800">
 
 </p>
 
 
 Ce diagramme présente les entités principale de l'application et leurs relations.
+
+
+
+
+
+
+
+
+
+
+#### 2. Architecture des composants UI
+
+
+
+<p align="center">
+  <img src="images/2_composants_UI.png" width="500" height="700">
+
+</p>
+
+Vue d'ensemble de la hiérarchie des composants React et leurs interactions.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
