@@ -34,3 +34,21 @@ Application de streaming audio développée avec next.js, typeScript et supabase
 ### Outils de développement
 - **ESLint** - Linting du code
 - **Zod** - Validation des schémas de données
+
+
+##  Architecture du projet
+
+web_app/
+ ├── actions/          # Server actions (next.js)
+ ├── app/             # Routes et pages (App Router)
+ ├── components/      # Composants React
+ │   ├── features/    # Composants métier
+ │   └── ui/         # Composants UI réutilisables
+ ├── hooks/          # Custom hooks React
+ ├── lib/            # Utilitaires et validations
+ └── providers/          # Context providers
+
+
+
+
+
